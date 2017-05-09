@@ -315,6 +315,8 @@ class SoficProcessor(object):
         # transitions, of the form (node, symbol)
         self.forbidden_transitions = []
 
+        # track how many processing steps total:
+        self.processing_steps = 0
         
     def matrix_product(self, node, symbol):
         """
@@ -350,12 +352,9 @@ class SoficProcessor(object):
             if debug:
                 print self
                 print "Exploring node", node
-            s = node[0]               # current vertex
-            steps -= 1                    # decrement step count
-            # stepcount -= 1
-            # if stepcount == 0:
-            #     stepcount = len(self.explore_nodes)
-            #     print 'STEP.  nodes left:', stepcount
+            s = node[0]                         # current vertex
+            steps -= 1                          # decrement step count
+            self.processing_steps += 1          # increment total steps
 
             # for all t out of s
             for t in self.symbol_graph.successors(s):
@@ -379,6 +378,9 @@ class SoficProcessor(object):
                     self.mgraph.add_edge(node,new_node,label=t)
                     if debug:
                         print "Adding edge:", node, "->", new_node
+            if debug:
+                print "Have completed", self.processing_steps, "total steps"
+
         if debug:
             if self.has_terminated():
                 print "Finished processing"
@@ -412,24 +414,27 @@ class SoficProcessor(object):
         """
         return len(self.explore_nodes)==0
 
-    def take_periodic_closure(self):
+    def take_periodic_closure(self,debug=None):
         """
         Removes edges between distinct strongly-connected components
         of the underlying vertex shift, and then removes any nodes
         with no edges.  Should be called before minimize().
         """
-        comps = list(nx.strongly_connected_components(self.mgraph.graph))
+        comps = list(nx.strongly_connected_components(self.mgraph))
         node2comp = {n:c for c in range(len(comps)) for n in comps[c]}
-            
-        for e in self.mgraph.graph.edges():
+
+        if debug:
+            print "Connected components of sizes:", map(len,comps)
+        
+        for e in self.mgraph.edges():
             if not node2comp[e[0]] == node2comp[e[1]]:
                 # print 'edge between components:', e
-                self.mgraph.graph.remove_edge(*e)
+                self.mgraph.remove_edge(*e)
 
-        for n in self.mgraph.graph.nodes():
+        for n in self.mgraph.nodes():
             # no outgoing edges means no incoming edges either
-            if not self.mgraph.graph.successors(n):
-                self.mgraph.graph.remove_node(n)
+            if not self.mgraph.successors(n):
+                self.mgraph.remove_node(n)
 
                 
     def to_DFA(self):
@@ -520,27 +525,40 @@ class SoficProcessor(object):
 
     def sofic_shift_to_latex_graph(self,layout=graphviz_layout,just_symbols=False):
         latex = ""
-        g = self.mgraph.graph
-        nodes = g.nodes()
-        pos = layout(g)
-        for i in range(len(nodes)):
-            n = nodes[i]
-            if just_symbols:
-                nodestr = str(n[0]+1)
-            else:
-                s = str(n[1])
-                s = string.replace(s,"H","")
-                s = string.replace(s,"[","{")
-                s = string.replace(s,"]","}")
-                nodestr = ( "$\\!\\left\\{%d, \\matmat%s\\right\\}\\!$"
-                            % (n[0]+1,s) )
-            latex += ( "\\node (%d-%d) at (%f,%f) {%s};\n"
-                       % (n[0]+1,i,pos[n][0],pos[n][1],nodestr) )
+        if hasattr(self,'minimized_mgraph'):
+            G = self.minimized_mgraph
+            nodes = G.nodes()
+            pos = layout(G)
+            for i in range(len(nodes)):
+                nodestr = "$\\bullet$"
+                latex += ( "\\node (%d) at (%f,%f) {%s};\n"
+                           % (i,pos[nodes[i]][0],pos[nodes[i]][1],nodestr) )
 
-        for e in g.edges_iter():
-            latex += ( "\\path (%d-%d) edge (%d-%d);\n"
-                       % (e[0][0]+1,nodes.index(e[0]),
-                          e[1][0]+1,nodes.index(e[1])) )
+            for u,v,d in G.edges(data=True):
+                latex += ( "\\path (%d) edge node[midway,fill=white,inner sep=1pt]{%d} (%d);\n"
+                           % (nodes.index(u),d['label']+1,nodes.index(v)) )
+        else:
+            G = self.mgraph
+            nodes = G.nodes()
+            pos = layout(G)
+            for i in range(len(nodes)):
+                n = nodes[i]
+                if just_symbols:
+                    nodestr = str(n[0]+1) # Don't display the actual matrices
+                else:
+                    s = str(n[1])
+                    s = string.replace(s,"H","")
+                    s = string.replace(s,"[","{")
+                    s = string.replace(s,"]","}")
+                    nodestr = ( "$\\!\\left\\{%d, \\matmat%s\\right\\}\\!$"
+                                % (n[0]+1,s) )
+                latex += ( "\\node (%d-%d) at (%f,%f) {%s};\n"
+                           % (n[0]+1,i,pos[n][0],pos[n][1],nodestr) )
+
+            for e in G.edges_iter():
+                latex += ( "\\path (%d-%d) edge (%d-%d);\n"
+                           % (e[0][0]+1,nodes.index(e[0]),
+                              e[1][0]+1,nodes.index(e[1])) )
         return latex
 
     
