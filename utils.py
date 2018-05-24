@@ -4,6 +4,8 @@ utils.py
 Author: Jesse Berwald
 
 Opened: Feb. 15, 2012
+
+Tools for importing from matlab and other formats.
 """
 import networkx as nx
 import numpy as np

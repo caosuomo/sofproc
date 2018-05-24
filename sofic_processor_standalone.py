@@ -410,15 +410,16 @@ class SoficProcessor(object):
 
     def has_terminated(self):
         """
-        Return whether or not the processor has more work to do.
+        Return a boolean which is True if and only if the processor
+        has completed processing, i.e., no marked nodes remain.
         """
         return len(self.explore_nodes)==0
 
     def take_periodic_closure(self,debug=None):
         """
         Removes edges between distinct strongly-connected components
-        of the underlying vertex shift, and then removes any nodes
-        with no edges.  Should be called before minimize().
+        of the underlying vertex presentation, and then removes any
+        nodes with no edges.  Should be called before minimize().
         """
         comps = list(nx.strongly_connected_components(self.mgraph))
         node2comp = {n:c for c in range(len(comps)) for n in comps[c]}
@@ -439,10 +440,11 @@ class SoficProcessor(object):
                 
     def to_DFA(self):
         """
-        Returns a DFA representation of the sofic shift, encoded into
-        a numpy array where A[state,symbol] = nextstate.  Here
-        (#states - 1) is the reject state, and there is no initial
-        state.
+        Returns a Deterministic Finite Automaton (DFA) representation
+        of the sofic shift, solely for the purpose of running DFA
+        minimization algorithms.  The DFA is encoded in a numpy array
+        where A[state,symbol] = nextstate.  Here (#states - 1) is the
+        reject state, and there is no initial state.
         """
         states = self.mgraph.nodes() + ['reject']
         reject = len(states)-1 # reject state index
@@ -472,6 +474,11 @@ class SoficProcessor(object):
 
 
     def minimize(self):
+        """
+        Stores to self.minimized_mgraph the edge presentation of the
+        sofic shift presented by self.mgraph with the fewest number of
+        states.
+        """
         d = self.to_DFA()
         classes = d.minimize_classes()
         # d.minimize()
@@ -508,6 +515,10 @@ class SoficProcessor(object):
 
 
     def index_map_to_latex_graph(self):
+        """
+        Returns a string (in TikZ code) representing the original
+        labeled matrix as a graph with submatrices on the edges.
+        """
         latex = ""
         for e in self.symbol_graph.edges_iter():
             s = str(self.edge_matrices[e])
@@ -524,6 +535,11 @@ class SoficProcessor(object):
         return latex
 
     def sofic_shift_to_latex_graph(self,layout=graphviz_layout,just_symbols=False):
+        """
+        Returns a string (in TikZ code) representing the vertex or
+        edge presentation # of the sofic shift given by running the
+        processor.
+        """
         latex = ""
         if hasattr(self,'minimized_mgraph'):
             G = self.minimized_mgraph
