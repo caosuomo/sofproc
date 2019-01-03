@@ -1,5 +1,5 @@
 """
-sofic_processor.py
+examples.py
 
 Opened: May 2018
 
@@ -8,7 +8,7 @@ Author: Rafael Frongillo
 Some examples showing how to use the Sofic Processor
 """
 
-from sofic_processor_standalone import SoficProcessor
+from sofic_processor import SoficProcessor
 import pickle
 import numpy
 
