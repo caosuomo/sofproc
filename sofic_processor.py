@@ -16,13 +16,13 @@ import networkx as nx
 from networkx import DiGraph
 from networkx.drawing.nx_agraph import graphviz_layout
 
-from collections import deque
+from collections import deque # for processing loop; queue okay in retrospect
 import numpy as np
 import sympy as sp
-from fractions import gcd
+from fractions import gcd # for column echelon form
 import string
 
-from DFA import DFA
+from DFA import DFA # for minimization
 
 
 ############################################################
@@ -240,14 +240,14 @@ class SoficProcessor(object):
      
     let H be a graph with nodes {[t,ech(M(s,t))] for all edges (s,t) of G}
       where ech(M) is the column echelon form of M
-    mark all nodes of H
+    let Q be a queue initially containing all nodes of H
      
-    loop until no marked nodes:
-      unmark some marked node [t,M]
+    loop until Q nonempty:
+      dequeue some node [t,M] from Q
       for edges (t,u) in G:
         let M' = ech(M(t,u) * M)
         if M' is not the zero matrix:
-          if [u,M'] is not a node of H, add and mark it
+          if [u,M'] is not a node of H, add to H and Q
           add edge ([t,M], [u,M']) labeled 'u' to H
  
     (remove nodes of H not in the graph maximal invariant set)
