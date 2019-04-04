@@ -23,6 +23,7 @@ labels = { 0 : [0,1], 1 : [2] }
 
 sof = SoficProcessor(matrix, labels, debug=True)
 sof.process()
+sof.debug=False
 print sof
 print "Entropy of the even shift:", sof.entropy()
 print "Now minimizing..."

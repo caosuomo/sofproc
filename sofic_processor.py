@@ -281,7 +281,7 @@ class SoficProcessor(object):
         
         # construct the starting graph on symbols
         # by the above, we must reverse the edge direction!
-        generator_graph = DiGraph(data=index_map.transpose())
+        generator_graph = DiGraph(index_map.transpose())
         self.symbol_graph = condensation(generator_graph,
                                          reg2gen,
                                          loops=True)
