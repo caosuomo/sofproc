@@ -6,7 +6,7 @@ Opened: December 2012
 Author: Rafael Frongillo
 
 Processes a labeled Conley index representative by finding a sofic
-shift which is semiconjugate to the original system.
+shift which is semiconjugate to the original system.  Requires NetworkX 1.11 (and does not work with 2.*).
 """
 
 # technically speaking we should wrap this; using only for
